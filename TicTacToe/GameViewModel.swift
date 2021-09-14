@@ -13,118 +13,273 @@ final class GameViewModel: ObservableObject {
                                GridItem(.flexible()),
                                GridItem(.flexible()),]
 
-    @Published var moves: [Move?] = Array(repeating: nil, count: 9)
-    @Published var isGameBoardDisabled = false
+    @Published var board: Board = []
+
+    @Published var isGameBoardDisabled = true
     @Published var alertItem: AlertItem?
     
     @Published var playerScore: CGFloat = 0
     @Published var computerScore: CGFloat = 0
+    
+    @Published var showStartScreen = true
+    
+    var humanPlayer: Player = .X
+    var computerPlayer: Player = .O
+    
+    init() {
+        board = initialState()
+    }
+    
+    // Returns player who has the next turn on a board.
+    func initialState() -> Board {
+        return  [EMPTY, EMPTY, EMPTY,
+                EMPTY, EMPTY, EMPTY,
+                EMPTY, EMPTY, EMPTY]
+    }
+    
+    // Returns player who has the next turn on a board.
+    func player(board: Board) -> Player {
         
-    func processPlayerMove(for position: Int) {
-        guard !isSquareOccupied(in: moves, at: position) else { return }
-        let move = Move(player: .human, boardIndex: position)
-        moves[position] = move
-        isGameBoardDisabled = true
-
-        if checkWinCondition(for: .human, in: moves) {
-            playerScore += 1
-            alertItem = AlertContext.humanWin
-        } else if checkForDraw(in: moves) {
-            playerScore += 0.5
-            computerScore += 0.5
-            alertItem = AlertContext.draw
+        let remainingMoves = board.filter({ $0 == EMPTY }).count
+        
+        if remainingMoves % 2 != 0 {
+            return .X
         } else {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [self] in
-                let computerPosition = makeComputerMove(in: moves)
-                let move = Move(player: .computer, boardIndex: computerPosition)
-                moves[computerPosition] = move
-
-                if checkWinCondition(for: .computer, in: moves) {
-                    computerScore += 1
-                    alertItem = AlertContext.computerWin
-                } else {
-                    isGameBoardDisabled = false
-                }
-
-            }
+            return .O
         }
     }
     
-    func isSquareOccupied(in moves: [Move?], at index: Int) -> Bool {
-        return moves[index] != nil
-    }
-    
-    // If AI can win, then win
-    // If AI can't win, then stop player from winning
-    // If player is not winning, take the middle square
-    // If middle square is taken, choose randomly
-    func makeComputerMove(in moves: [Move?]) -> Int {
-        let winPatterns: Set<Set<Int>> = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]]
-
-        // If AI can win, then win
-        let computerMoves = moves.compactMap { $0 }.filter { $0.player == .computer }
-        let computerPositions = Set(computerMoves.map { $0.boardIndex })
-
-        for pattern in winPatterns {
-            let winPositions = pattern.subtracting(computerPositions)
-            if winPositions.count == 1 {
-                if !isSquareOccupied(in: moves, at: winPositions.first!) {
-                    return winPositions.first!
-                }
+    // Returns set of moves of a player, if player is nil returns all possible moves
+    func moves(board: Board, player: Player? = EMPTY) -> [Move] {
+        var moves = [Move]()
+        for (pos , value) in board.enumerated() {
+            if value == player {
+                moves.append(pos)
             }
         }
-
-        // If AI can't win, then stop player from winning
-        let humanMoves = moves.compactMap { $0 }.filter { $0.player == .human }
-        let humanPositions = Set(humanMoves.map { $0.boardIndex })
-
-        for pattern in winPatterns {
-            let winPositions = pattern.subtracting(humanPositions)
-            if winPositions.count == 1 {
-                if !isSquareOccupied(in: moves, at: winPositions.first!) {
-                    return winPositions.first!
-                }
-            }
-        }
-
-        // If player is not winning, take the middle square
-        let centreSquare = 4
-        if !isSquareOccupied(in: moves, at: centreSquare) {
-            return centreSquare
-        }
-
-        // If middle square is taken, choose randomly
-        var movePosition = Int.random(in: 0..<9)
-
-        while isSquareOccupied(in: moves, at: movePosition) {
-            movePosition = Int.random(in: 0..<9)
-        }
-
-        return movePosition
-    }
-    
-    func checkWinCondition(for player: Player, in moves: [Move?]) -> Bool {
-        let winPatterns: Set<Set<Int>> = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]]
         
-        let playerMoves = moves.compactMap { $0 }.filter { $0.player == player }
-        let playerPositions = Set(playerMoves.map { $0.boardIndex })
+        return moves
+    }
+    
+    // Returns the board that results from making move (i, j) on the board.
+    func result(board: Board, move: Move) -> Board {
+        
+        if board[move] != EMPTY {
+            return board
+        }
+        
+        let nextMove = player(board: board)
 
-        for pattern in winPatterns where pattern.isSubset(of: playerPositions) {
+        var newBoard = board
+        newBoard[move] = nextMove
+        
+        return newBoard
+    }
+    
+    // Returns the winner of the game, if there is one.
+    func winner(board: Board) -> Player? {
+        
+        let movesOfX = moves(board: board, player: .X)
+        if checkWinPattern(moves: movesOfX) {
+            return .X
+        }
+
+        let movesOfO = moves(board: board, player: .O)
+        if checkWinPattern(moves: movesOfO) {
+            return .O
+        }
+        
+        return nil
+    }
+    
+    // Returns the winner of the game, if there is one.
+    func checkWinPattern(moves: [Move]) -> Bool {
+        
+        let winPatterns: Set<Set<Int>> = [[0, 1, 2],
+                                          [3, 4, 5],
+                                          [6, 7, 8],
+                                          [0, 3, 6],
+                                          [1, 4, 7],
+                                          [2, 5, 8],
+                                          [0, 4, 8],
+                                          [2, 4, 6]]
+
+        for pattern in winPatterns where pattern.isSubset(of: moves) {
+            return true
+        }
+
+        return false
+    }
+
+    // Returns True if game is over, False otherwise.
+    func terminal(board: Board) -> Bool {
+        
+        if winner(board: board) != nil {
             return true
         }
         
-        return false
+        return board.filter({ $0 == EMPTY }).isEmpty
     }
     
-    func checkForDraw(in moves: [Move?]) -> Bool {
-        return moves.compactMap { $0 }.count == 9
+    // Returns 1 if X has won the game, -1 if O has won, 0 otherwise.
+    func utility(board: Board) -> Int {
+
+        let winner = winner(board: board)
+        if winner == .X {
+            return X_WINS
+        } else if winner == .O {
+            return O_WINS
+        } else {
+            return DRAW
+        }
     }
     
+    // Returns the optimal action for the current player on the board.
+    func minimax(board: Board) -> Move? {
+
+        if terminal(board: board) {
+            return nil
+        }
+
+        let nextMove = player(board: board)
+        
+        if nextMove == .X {
+            let (_, action) = maxValue(board: board)
+            return action
+        } else {
+            let (_, action) = minValue(board: board)
+            return action
+        }
+    }
+    
+    func maxValue(board: Board) -> (Int, Move?) {
+
+        var value = MIN_VALUE
+        var finalAction: Move? = nil
+
+        if terminal(board: board) {
+            return (utility(board: board), finalAction)
+        }
+
+        for action in moves(board: board) {
+            let (minV, _) = minValue(board: result(board: board, move: action))
+
+            // Since 1 is the max possible score, if we find that for max player no need to search further
+            if minV == X_WINS {
+                return (minV, action)
+            } else if minV > value {
+                finalAction = action
+                value = minV
+            }
+        }
+        return (value, finalAction)
+    }
+
+    func minValue(board: Board) -> (Int, Move?) {
+
+        var value = MAX_VALUE
+        var finalAction: Move? = nil
+
+        if terminal(board: board) {
+            return (utility(board: board), finalAction)
+        }
+
+        for action in moves(board: board) {
+            let (maxV, _) = maxValue(board: result(board: board, move: action))
+
+            // Since -1 is the min possible score, if we find that for min player no need to search further
+            if maxV == O_WINS {
+                return (maxV, action)
+            } else if maxV < value {
+                finalAction = action
+                value = maxV
+            }
+        }
+        return (value, finalAction)
+    }
+        
+    func processPlayerMove(for position: Int) {
+        guard !isSquareOccupied(in: board, at: position) else { return }
+        board[position] = humanPlayer
+        isGameBoardDisabled = true
+
+        if terminal(board: board) {
+            isGameBoardDisabled = false
+            if winner(board: board) == humanPlayer {
+                playerScore += 1
+                alertItem = AlertContext.humanWin
+            } else {
+                playerScore += 0.5
+                computerScore += 0.5
+                alertItem = AlertContext.draw
+            }
+        } else {
+            processComputerMove()
+        }
+    }
+    
+    func processComputerMove() {
+        DispatchQueue.global(qos: .userInitiated).async { [self] in
+            
+            let startTime = Date().timeIntervalSince1970
+            //Heavy operation takes time to calculate
+            let computerPosition = minimax(board: board)
+            let endTime = Date().timeIntervalSince1970
+            let timeTaken = endTime - startTime
+            
+            //Show min delay of 0.5, if minimax takes more than 0.5 secs then no delay is required.
+            var delay = 0.5 - timeTaken
+            if delay < 0 {
+                delay = 0
+            }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [self] in
+                board[computerPosition!] = computerPlayer
+                
+                isGameBoardDisabled = false
+                if terminal(board: board) {
+                    if winner(board: board) == computerPlayer {
+                        computerScore += 1
+                        alertItem = AlertContext.computerWin
+                    } else {
+                        playerScore += 0.5
+                        computerScore += 0.5
+                        alertItem = AlertContext.draw
+                    }
+                }
+            }
+        }
+    }
+    
+    func checkFirstMove() {
+        if computerPlayer == .X {
+            isGameBoardDisabled = true
+            processComputerMove()
+        } else {
+            isGameBoardDisabled = false
+        }
+    }
+
+    func isSquareOccupied(in board: Board, at index: Int) -> Bool {
+        return board[index] != nil
+    }
+
     func resetGame() {
-        moves = Array(repeating: nil, count: 9)
-        isGameBoardDisabled = false
+        showStartScreen = true
+        board = initialState()
     }
     
+    //Human is playing as X
+    func setHumanAsX() {
+        humanPlayer = .X
+        computerPlayer = .O
+    }
+    
+    //Human is playing as O
+    func setHumanAsO() {
+        humanPlayer = .O
+        computerPlayer = .X
+    }
 }
 
 extension CGFloat {

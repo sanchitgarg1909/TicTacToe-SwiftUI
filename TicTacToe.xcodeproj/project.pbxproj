@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8320C64926DEB7C100967586 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8320C64826DEB7C100967586 /* Constants.swift */; };
+		8320C65026E7F2D100967586 /* StartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8320C64F26E7F2D100967586 /* StartView.swift */; };
 		83D666FB26ACB14B0058C851 /* TicTacToeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D666FA26ACB14B0058C851 /* TicTacToeApp.swift */; };
 		83D666FD26ACB14B0058C851 /* GameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D666FC26ACB14B0058C851 /* GameView.swift */; };
 		83D666FF26ACB14F0058C851 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 83D666FE26ACB14F0058C851 /* Assets.xcassets */; };
@@ -35,6 +37,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		8320C64826DEB7C100967586 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
+		8320C64F26E7F2D100967586 /* StartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartView.swift; sourceTree = "<group>"; };
 		83D666F726ACB14B0058C851 /* TicTacToe.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TicTacToe.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		83D666FA26ACB14B0058C851 /* TicTacToeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TicTacToeApp.swift; sourceTree = "<group>"; };
 		83D666FC26ACB14B0058C851 /* GameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView.swift; sourceTree = "<group>"; };
@@ -106,6 +110,8 @@
 				83D666FE26ACB14F0058C851 /* Assets.xcassets */,
 				83D6670326ACB14F0058C851 /* Info.plist */,
 				83D6670026ACB14F0058C851 /* Preview Content */,
+				8320C64826DEB7C100967586 /* Constants.swift */,
+				8320C64F26E7F2D100967586 /* StartView.swift */,
 			);
 			path = TicTacToe;
 			sourceTree = "<group>";
@@ -265,8 +271,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8320C64926DEB7C100967586 /* Constants.swift in Sources */,
 				83D6672826AD7B4A0058C851 /* GameViewModel.swift in Sources */,
 				83D666FD26ACB14B0058C851 /* GameView.swift in Sources */,
+				8320C65026E7F2D100967586 /* StartView.swift in Sources */,
 				83D6672626AD706E0058C851 /* Alerts.swift in Sources */,
 				83D666FB26ACB14B0058C851 /* TicTacToeApp.swift in Sources */,
 			);
