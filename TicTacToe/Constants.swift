@@ -8,6 +8,11 @@
 typealias Move = Int
 typealias Board = [Player?]
 
+enum Player: String {
+    case X = "xmark",
+         O = "circle"
+}
+
 let EMPTY: Player? = nil
 
 // Game scores
